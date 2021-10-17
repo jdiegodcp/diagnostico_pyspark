@@ -12,12 +12,22 @@ class Transformer(Writer):
         self.spark: SparkSession = spark
         df: DataFrame = self.read_input()
         df.printSchema()
-        df = self.clean_data_solved(df)
-        df = self.example_window_function(df)
+        #exercise 1
+        df = self.exercise1(df)
+        df.show(n=5, truncate=False)
+        #df = self.clean_data_solved(df)
+        #exercise 2
+        df = self.exercise2(df)
+        df.show(n=30, truncate=False)
+        # exercise 3
+        df = self.exercise3(df)
+        df.show(n=50, truncate=False)
+
         df = self.column_selection_solved(df)
 
         # for show 100 records after your transformations and show the DataFrame schema
-        df.show(n=100, truncate=False)
+        # Here it is shown what is required in the exercise part 1
+        df.show(n=1, truncate=False)
         df.printSchema()
 
         # Uncomment when you want write your final output
@@ -54,18 +64,11 @@ class Transformer(Writer):
         """
         df = df.filter(
             (short_name.column().isNotNull()) &
-            (short_name.column().isNotNull()) &
-            (long_name.column().isNotNull()) &
             (long_name.column().isNotNull()) &
             (age.column().isNotNull()) &
-            (age.column().isNotNull()) &
-            (weight_kg.column().isNotNull()) &
             (weight_kg.column().isNotNull()) &
             (nationality.column().isNotNull()) &
-            (nationality.column().isNotNull()) &
             (club_name.column().isNotNull()) &
-            (club_name.column().isNotNull()) &
-            (potential.column().isNotNull()) &
             (potential.column().isNotNull()) &
             (overall.column().isNotNull()) &
             (team_position.column().isNotNull())
@@ -81,8 +84,27 @@ class Transformer(Writer):
             short_name.column(),
             overall.column(),
             height_cm.column(),
-            team_position.column(),
-            catHeightByPosition.column()
+            team_position.column()
+            #catHeightByPosition.column()
+        )
+        return df
+
+    def exercise1(self, df: DataFrame) -> DataFrame:
+        """
+        :param df: is a DataFrame with players information
+        :return: a DataFrame with just 5 columns...
+        """
+        df = df.select(
+            short_name.column(),
+            long_name.column(),
+            age.column(),
+            height_cm.column(),
+            weight_kg.column(),
+            nationality.column(),
+            club_name.column(),
+            overall.column(),
+            potential.column(),
+            team_position.column()
         )
         return df
 
@@ -101,12 +123,12 @@ class Transformer(Writer):
             potential.column(),
             overall.column(),
             height_cm.column(),
-            team_position.column(),
-            catHeightByPosition.column()
+            team_position.column()
+            #catHeightByPosition.column()
         )
         return df
 
-    def example_window_function(self, df: DataFrame) -> DataFrame:
+    def exercise2(self, df: DataFrame) -> DataFrame:
         """
         :param df: is a DataFrame with players information (must have team_position and height_cm columns)
         :return: add to the DataFrame the column "cat_height_by_position"
@@ -115,14 +137,29 @@ class Transformer(Writer):
              cat B for if is in 50 players tallest
              cat C for the rest
         """
+        column_list = ["nationality", "team_position"]
+
         w: WindowSpec = Window \
-            .partitionBy(team_position.column()) \
-            .orderBy(height_cm.column().desc())
+            .partitionBy([f.col(x) for x in column_list]) \
+            .orderBy(overall.column().desc())
         rank: Column = f.rank().over(w)
 
-        rule: Column = f.when(rank < 10, "A") \
-            .when(rank < 50, "B") \
-            .otherwise("C")
+        rule: Column = f.when(rank < 4, "A") \
+            .when(rank < 6, "B") \
+            .when(rank < 11, "C") \
+            .otherwise("D")
 
-        df = df.withColumn(catHeightByPosition.name, rule)
+        df = df.withColumn(player_cat.name, rule)
+        return df
+
+    def exercise3(self, df: DataFrame) -> DataFrame:
+        """
+        :param df: is a DataFrame with players information (must have team_position and height_cm columns)
+        :return: add to the DataFrame the column "cat_height_by_position"
+             by each position value
+             cat A for if is in 20 players tallest
+             cat B for if is in 50 players tallest
+             cat C for the rest
+        """
+        df = df.withColumn(potential_vs_overall.name, (f.col("potential") / f.col("overall")))
         return df
