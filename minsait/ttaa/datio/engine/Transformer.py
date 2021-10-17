@@ -12,9 +12,9 @@ class Transformer(Writer):
         self.spark: SparkSession = spark
         df: DataFrame = self.read_input()
         df.printSchema()
-        df = self.clean_data(df)
+        df = self.clean_data_solved(df)
         df = self.example_window_function(df)
-        df = self.column_selection(df)
+        df = self.column_selection_solved(df)
 
         # for show 100 records after your transformations and show the DataFrame schema
         df.show(n=100, truncate=False)
@@ -46,6 +46,32 @@ class Transformer(Writer):
         )
         return df
 
+    def clean_data_solved(self, df: DataFrame) -> DataFrame:
+        """
+        :param df: is a DataFrame with players information
+        :return: a DataFrame with filter transformation applied
+        column team_position != null && column short_name != null && column overall != null
+        """
+        df = df.filter(
+            (short_name.column().isNotNull()) &
+            (short_name.column().isNotNull()) &
+            (long_name.column().isNotNull()) &
+            (long_name.column().isNotNull()) &
+            (age.column().isNotNull()) &
+            (age.column().isNotNull()) &
+            (weight_kg.column().isNotNull()) &
+            (weight_kg.column().isNotNull()) &
+            (nationality.column().isNotNull()) &
+            (nationality.column().isNotNull()) &
+            (club_name.column().isNotNull()) &
+            (club_name.column().isNotNull()) &
+            (potential.column().isNotNull()) &
+            (potential.column().isNotNull()) &
+            (overall.column().isNotNull()) &
+            (team_position.column().isNotNull())
+        )
+        return df
+
     def column_selection(self, df: DataFrame) -> DataFrame:
         """
         :param df: is a DataFrame with players information
@@ -53,6 +79,26 @@ class Transformer(Writer):
         """
         df = df.select(
             short_name.column(),
+            overall.column(),
+            height_cm.column(),
+            team_position.column(),
+            catHeightByPosition.column()
+        )
+        return df
+
+    def column_selection_solved(self, df: DataFrame) -> DataFrame:
+        """
+        :param df: is a DataFrame with players information
+        :return: a DataFrame with just 5 columns...
+        """
+        df = df.select(
+            short_name.column(),
+            long_name.column(),
+            age.column(),
+            weight_kg.column(),
+            nationality.column(),
+            club_name.column(),
+            potential.column(),
             overall.column(),
             height_cm.column(),
             team_position.column(),
