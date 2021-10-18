@@ -8,29 +8,26 @@ from minsait.ttaa.datio.utils.Writer import Writer
 
 
 class Transformer(Writer):
-    def __init__(self, spark: SparkSession):
+    def __init__(self, spark: SparkSession, parameter: int):
         self.spark: SparkSession = spark
         df: DataFrame = self.read_input()
         df.printSchema()
-        #exercise 1
-        df = self.exercise1(df)
-        df.show(n=5, truncate=False)
-        #df = self.clean_data_solved(df)
-        #exercise 2
-        df = self.exercise2(df)
-        df.show(n=30, truncate=False)
-        # exercise 3
-        df = self.exercise3(df)
-        df.show(n=50, truncate=False)
-
-        df = self.column_selection_solved(df)
-
-        # for show 100 records after your transformations and show the DataFrame schema
-        # Here it is shown what is required in the exercise part 1
-        df.show(n=1, truncate=False)
-        df.printSchema()
-
-        # Uncomment when you want write your final output
+        # method 5
+        df = self.method5(df, parameter)
+        df.show(n=100, truncate=False)
+        # method 1
+        df = self.method1(df)
+        df.show(n=100, truncate=False)
+        # method 2
+        df = self.method2(df)
+        df.show(n=100, truncate=False)
+        # method 3
+        df = self.method3(df)
+        df.show(n=100, truncate=False)
+        # method 4
+        df = self.method4(df)
+        df.show(n=100, truncate=False)
+        # Generating files required in exercise 6
         self.write(df)
 
     def read_input(self) -> DataFrame:
@@ -42,54 +39,7 @@ class Transformer(Writer):
             .option(HEADER, True) \
             .csv(INPUT_PATH)
 
-    def clean_data(self, df: DataFrame) -> DataFrame:
-        """
-        :param df: is a DataFrame with players information
-        :return: a DataFrame with filter transformation applied
-        column team_position != null && column short_name != null && column overall != null
-        """
-        df = df.filter(
-            (short_name.column().isNotNull()) &
-            (short_name.column().isNotNull()) &
-            (overall.column().isNotNull()) &
-            (team_position.column().isNotNull())
-        )
-        return df
-
-    def clean_data_solved(self, df: DataFrame) -> DataFrame:
-        """
-        :param df: is a DataFrame with players information
-        :return: a DataFrame with filter transformation applied
-        column team_position != null && column short_name != null && column overall != null
-        """
-        df = df.filter(
-            (short_name.column().isNotNull()) &
-            (long_name.column().isNotNull()) &
-            (age.column().isNotNull()) &
-            (weight_kg.column().isNotNull()) &
-            (nationality.column().isNotNull()) &
-            (club_name.column().isNotNull()) &
-            (potential.column().isNotNull()) &
-            (overall.column().isNotNull()) &
-            (team_position.column().isNotNull())
-        )
-        return df
-
-    def column_selection(self, df: DataFrame) -> DataFrame:
-        """
-        :param df: is a DataFrame with players information
-        :return: a DataFrame with just 5 columns...
-        """
-        df = df.select(
-            short_name.column(),
-            overall.column(),
-            height_cm.column(),
-            team_position.column()
-            #catHeightByPosition.column()
-        )
-        return df
-
-    def exercise1(self, df: DataFrame) -> DataFrame:
+    def method1(self, df: DataFrame) -> DataFrame:
         """
         :param df: is a DataFrame with players information
         :return: a DataFrame with just 5 columns...
@@ -108,27 +58,7 @@ class Transformer(Writer):
         )
         return df
 
-    def column_selection_solved(self, df: DataFrame) -> DataFrame:
-        """
-        :param df: is a DataFrame with players information
-        :return: a DataFrame with just 5 columns...
-        """
-        df = df.select(
-            short_name.column(),
-            long_name.column(),
-            age.column(),
-            weight_kg.column(),
-            nationality.column(),
-            club_name.column(),
-            potential.column(),
-            overall.column(),
-            height_cm.column(),
-            team_position.column()
-            #catHeightByPosition.column()
-        )
-        return df
-
-    def exercise2(self, df: DataFrame) -> DataFrame:
+    def method2(self, df: DataFrame) -> DataFrame:
         """
         :param df: is a DataFrame with players information (must have team_position and height_cm columns)
         :return: add to the DataFrame the column "cat_height_by_position"
@@ -152,7 +82,7 @@ class Transformer(Writer):
         df = df.withColumn(player_cat.name, rule)
         return df
 
-    def exercise3(self, df: DataFrame) -> DataFrame:
+    def method3(self, df: DataFrame) -> DataFrame:
         """
         :param df: is a DataFrame with players information (must have team_position and height_cm columns)
         :return: add to the DataFrame the column "cat_height_by_position"
@@ -162,4 +92,30 @@ class Transformer(Writer):
              cat C for the rest
         """
         df = df.withColumn(potential_vs_overall.name, (f.col("potential") / f.col("overall")))
+        return df
+
+    def method4(self, df: DataFrame) -> DataFrame:
+        """
+        :param df: is a DataFrame with players information
+        :return: a DataFrame with filter transformation applied
+        column team_position != null && column short_name != null && column overall != null
+        """
+        df = df.filter(
+            (player_cat.column().isin("A", "B")) |
+            ((player_cat.column().isin("C")) & (potential_vs_overall.column() > 1.15)) |
+            ((player_cat.column().isin("D")) & (potential_vs_overall.column() > 1.25))
+        )
+        return df
+
+    def method5(self, df: DataFrame, parameter: int) -> DataFrame:
+        """
+        :param parameter:
+        :param df: is a DataFrame with players information
+        :return: a DataFrame with filter transformation applied
+        column team_position != null && column short_name != null && column overall != null
+        """
+        if parameter == 1:
+            df = df.filter(
+                (age.column() < 23)
+            )
         return df
